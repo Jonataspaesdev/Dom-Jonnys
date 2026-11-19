@@ -1,12 +1,12 @@
 window.carregarAgendamentos = async function() {
     const tabela = document.getElementById('tabelaAgendamentos');
     if (!tabela) return;
-    
+
     tabela.innerHTML = '<tr><td colspan="7">A carregar agendamentos...</td></tr>';
 
     try {
         const response = await fetch('http://localhost:8080/api/agendamentos');
-        
+
         if (response.ok) {
             const agendamentos = await response.json();
             tabela.innerHTML = '';
@@ -18,9 +18,8 @@ window.carregarAgendamentos = async function() {
 
             agendamentos.forEach(item => {
                 const tr = document.createElement('tr');
-                
                 const statusClass = item.status === 'CONFIRMADO' ? 'status-confirmado' : 'status-pendente';
-                
+
                 tr.innerHTML = `
                     <td>${item.id}</td>
                     <td>${item.clienteInfo}</td>
@@ -49,30 +48,36 @@ window.confirmarAgendamento = async function(id) {
         const response = await fetch(`http://localhost:8080/api/agendamentos/${id}/confirmar`, {
             method: 'PUT'
         });
+
         if (response.ok) {
-            carregarAgendamentos();
+            await window.carregarAgendamentos();
         } else {
-            alert('Erro ao confirmar agendamento.');
+            alert(`Erro ao confirmar agendamento (HTTP ${response.status}).`);
         }
     } catch (error) {
-        console.error('Erro:', error);
+        console.error('Erro ao confirmar:', error);
+        alert('Falha de comunicação com o servidor ao confirmar.');
     }
 };
 
 window.cancelarAgendamento = async function(id) {
-    if (confirm('Tem a certeza de que deseja cancelar este agendamento?')) {
-        try {
-            const response = await fetch(`http://localhost:8080/api/agendamentos/${id}`, {
-                method: 'DELETE'
-            });
-            if (response.ok) {
-                carregarAgendamentos();
-            } else {
-                alert('Erro ao apagar agendamento.');
-            }
-        } catch (error) {
-            console.error('Erro:', error);
+    if (!confirm('Tem a certeza de que deseja cancelar este agendamento?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`http://localhost:8080/api/agendamentos/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            await window.carregarAgendamentos();
+        } else {
+            alert(`Erro ao apagar agendamento (HTTP ${response.status}).`);
         }
+    } catch (error) {
+        console.error('Erro ao cancelar:', error);
+        alert('Falha de comunicação com o servidor ao cancelar.');
     }
 };
 
