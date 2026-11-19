@@ -44,8 +44,12 @@ public class AgendamentoController {
     public ResponseEntity<Void> apagarAgendamento(@PathVariable Long id) {
         if (agendamentoRepository.existsById(id)) {
             agendamentoRepository.deleteById(id);
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
+            return ResponseEntity.noCont
+            @PostMapping
+public ResponseEntity<Agendamento> criarAgendamento(@RequestBody Agendamento agendamento) {
+    if (agendamento.getStatus() == null || agendamento.getStatus().isBlank()) {
+        agendamento.setStatus("PENDENTE");
     }
+    Agendamento novoAgendamento = agendamentoRepository.save(agendamento);
+    return ResponseEntity.ok(novoAgendamento);
 }
