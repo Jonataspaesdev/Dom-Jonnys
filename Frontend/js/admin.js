@@ -1,3 +1,21 @@
+function escapeHtml(valor) {
+    return String(valor ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function formatarDataBR(dataISO) {
+    if (!dataISO) return '';
+    const partes = String(dataISO).split('-');
+    if (partes.length === 3) {
+        return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    }
+    return dataISO;
+}
+
 window.carregarAgendamentos = async function() {
     const tabela = document.getElementById('tabelaAgendamentos');
     if (!tabela) return;
@@ -11,25 +29,33 @@ window.carregarAgendamentos = async function() {
             const agendamentos = await response.json();
             tabela.innerHTML = '';
 
-            if (agendamentos.length === 0) {
+            if (!Array.isArray(agendamentos) || agendamentos.length === 0) {
                 tabela.innerHTML = '<tr><td colspan="7">Nenhum agendamento encontrado.</td></tr>';
                 return;
             }
 
+            agendamentos.sort((a, b) => {
+                const chaveA = `${a.data || ''} ${a.horario || ''}`;
+                const chaveB = `${b.data || ''} ${b.horario || ''}`;
+                return chaveA.localeCompare(chaveB);
+            });
+
             agendamentos.forEach(item => {
                 const tr = document.createElement('tr');
-                const statusClass = item.status === 'CONFIRMADO' ? 'status-confirmado' : 'status-pendente';
+                const statusTexto = item.status || 'PENDENTE';
+                const statusClass = statusTexto === 'CONFIRMADO' ? 'status-confirmado' : 'status-pendente';
+                const dataFormatada = formatarDataBR(item.data);
 
                 tr.innerHTML = `
-                    <td>${item.id}</td>
-                    <td>${item.clienteInfo}</td>
-                    <td>${item.servico}</td>
-                    <td>${item.data}</td>
-                    <td>${item.horario}</td>
-                    <td><span class="${statusClass}">${item.status || 'PENDENTE'}</span></td>
+                    <td>${escapeHtml(item.id)}</td>
+                    <td>${escapeHtml(item.clienteInfo)}</td>
+                    <td>${escapeHtml(item.servico)}</td>
+                    <td>${escapeHtml(dataFormatada)}</td>
+                    <td>${escapeHtml(item.horario)}</td>
+                    <td><span class="${statusClass}">${escapeHtml(statusTexto)}</span></td>
                     <td>
-                        ${item.status !== 'CONFIRMADO' ? `<button class="btn-confirmar" onclick="confirmarAgendamento(${item.id})">Confirmar</button>` : ''}
-                        <button class="btn-cancelar" onclick="cancelarAgendamento(${item.id})">Cancelar</button>
+                        ${statusTexto !== 'CONFIRMADO' ? `<button class="btn-confirmar" onclick="confirmarAgendamento(${Number(item.id)})">Confirmar</button>` : ''}
+                        <button class="btn-cancelar" onclick="cancelarAgendamento(${Number(item.id)})">Cancelar</button>
                     </td>
                 `;
                 tabela.appendChild(tr);
