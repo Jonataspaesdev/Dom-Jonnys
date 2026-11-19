@@ -35,8 +35,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 mensagemEl.innerText = 'Agendamento realizado com sucesso!';
                 form.reset();
             } else {
+                const erroTexto = await response.text();
                 mensagemEl.style.color = 'red';
-                mensagemEl.innerText = `Erro ao realizar o agendamento (HTTP ${response.status}).`;
+                mensagemEl.innerText = erroTexto || `Erro ao realizar o agendamento (HTTP ${response.status}).`;
             }
         } catch (error) {
             console.error('Erro na requisição:', error);
